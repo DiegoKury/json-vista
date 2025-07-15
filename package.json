@@ -1,0 +1,20 @@
+{
+    "name": "json-explorer",
+    "version": "1.0.0",
+    "description": "Chrome extension for viewing JSON with React",
+    "main": "index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "primereact": "^10.0.0",
+        "primeicons": "^6.0.0"
+    },
+    "devDependencies": {
+        "vite": "^5.0.0",
+        "@vitejs/plugin-react": "^4.0.0"
+    }
+}

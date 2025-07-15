@@ -1,0 +1,29 @@
+{
+    "manifest_version": 3,
+    "name": "Custom JSON Viewer",
+    "version": "1.0.0",
+    "description": "Replace raw JSON pages with a React‑powered viewer",
+    "permissions": [
+        "webRequest"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "content_scripts": [
+     {
+       "matches": [
+         "*://*/*.json",
+         "*://*/*?*json*",
+         "*://api.github.com/*",
+         "*://jsonplaceholder.typicode.com/*"
+       ],
+       "js": [
+         "dist/contentScript.js"
+       ],
+       "css": [
+         "dist/contentScript.css"
+       ],
+       "run_at": "document_idle"
+     }
+   ]
+}
