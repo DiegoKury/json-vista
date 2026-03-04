@@ -1,0 +1,249 @@
+/* All styles are scoped under .json-explorer to avoid conflicts with host apps */
+
+.json-explorer {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  color: #1e293b;
+  overflow: auto;
+  padding: 0.5rem;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.json-explorer .source-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  width: fit-content;
+}
+.json-explorer .source-header a { color: #64748b; text-decoration: none }
+.json-explorer .source-header a:hover { color: #334155 }
+
+.json-explorer .card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.json-explorer .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.json-explorer .match-count {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.json-explorer .btn {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  transition: background 0.12s;
+  line-height: 1.4;
+}
+.json-explorer .btn:hover    { background: #f1f5f9 }
+.json-explorer .btn:disabled { opacity: 0.45; cursor: not-allowed }
+.json-explorer .btn-secondary { background: #f8fafc }
+.json-explorer .btn-danger    { border-color: #fca5a5; color: #dc2626; background: #fff1f2 }
+.json-explorer .btn-danger:hover { background: #ffe4e6 }
+
+/* Icon-style button for inline tree actions */
+.json-explorer .btn-icon {
+  padding: 0.15em 0.35em;
+  height: 1.5em;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.3;
+  font-size: 0.8125rem;
+  line-height: 1;
+  border-radius: 3px;
+  transition: opacity 0.12s, background 0.12s;
+}
+.json-explorer .btn-icon:hover { opacity: 1; background: #f1f5f9 }
+
+/* ── Form elements ───────────────────────────────────────── */
+.json-explorer .input {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  outline: none;
+  line-height: 1.4;
+}
+.json-explorer .input:focus { border-color: #818cf8 }
+
+.json-explorer .select {
+  padding: 0.35rem 1.75rem 0.35rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  outline: none;
+  line-height: 1.4;
+}
+.json-explorer .select:focus { border-color: #818cf8 }
+
+.json-explorer .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── Search panel ────────────────────────────────────────── */
+.json-explorer .search-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.json-explorer .search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ── Tree table ──────────────────────────────────────────── */
+.json-explorer .json-tree {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.json-explorer .json-tree tr:nth-child(even) { background: #fff5f5 }
+.json-explorer .json-tree tr:nth-child(odd)  { background: white }
+
+.json-explorer .node-key {
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 1px 0;
+}
+.json-explorer .node-key.leaf { cursor: default }
+
+.json-explorer .node-actions {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  width: 1%;
+}
+
+.json-explorer .node-value { padding-left: 0.25rem }
+
+.json-explorer .node-toggle {
+  cursor: default;
+  user-select: none;
+}
+.json-explorer .node-toggle.clickable { cursor: pointer }
+
+/* ── Scalar value colors ─────────────────────────────────── */
+.json-explorer .scalar-string  { color: #be185d }
+.json-explorer .scalar-number  { color: #15803d }
+.json-explorer .scalar-boolean { color: #1d4ed8 }
+.json-explorer .scalar-object  { color: #64748b }
+
+/* ── Match highlights ────────────────────────────────────── */
+.json-explorer .highlight-match { background: #bbdefb }
+.json-explorer .highlight-key   { background: #d1d5db }
+
+/* ── Loading spinner ─────────────────────────────────────── */
+@keyframes json-explorer-spin { to { transform: rotate(360deg) } }
+.json-explorer .spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid #e2e8f0;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: json-explorer-spin 0.5s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ── Distinct values dialog ──────────────────────────────── */
+.json-explorer .dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.json-explorer .dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  width: min(50vw, 640px);
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.json-explorer .dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.json-explorer .dialog-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.json-explorer .copy-feedback {
+  font-size: 0.8125rem;
+  color: #15803d;
+}
+
+.json-explorer .dialog table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.json-explorer .dialog th {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.json-explorer .dialog th:hover { background: #f8fafc }
+
+.json-explorer .dialog td {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.json-explorer .dialog tr:nth-child(even) td { background: #f5f5ff }

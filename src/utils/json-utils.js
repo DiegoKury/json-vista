@@ -11,16 +11,16 @@ export const isCollectionEmpty = (value) => {
 
 export const cleanData = (data) => {
   if (isObject(data)) {
-    const { originalIndex, ...cleanedData } = data
-    return cleanedData
+    const { originalIndex, ...rest } = data
+    return rest
   }
   return data
 }
 
+// Replaces numeric array indices and UUIDs with '*' for path pattern matching
 export const getGeneralizedSegment = (segment) => {
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(segment) || !isNaN(segment)
-    ? '*'
-    : segment
+  const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(segment)
+  return isUUID || !isNaN(segment) ? '*' : segment
 }
 
 export const getIndentationStyle = (depth) => ({ paddingLeft: `${depth * 20}px` })

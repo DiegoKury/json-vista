@@ -1,22 +1,25 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: 'dist',
+    lib: {
+      entry: resolve(__dirname, 'src/index.js'),
+      name: 'JsonExplorer',
+      fileName: (format) => `json-explorer.${format}.js`,
+    },
     rollupOptions: {
-      input: {
-        contentScript: resolve(__dirname, 'contentScript.jsx'),
-      },
+      external: ['react', 'react-dom'],
       output: {
-        entryFileNames: '[name].js',
-        assetFileNames: '[name].[ext]',
-        // format: 'iife', // Uncomment if you need IIFE for Chrome compatibility
+        globals: {
+          react: 'React',
+          'react-dom': 'ReactDOM',
+        },
       },
     },
-    sourcemap: false,
+    sourcemap: true,
     emptyOutDir: true,
   },
-}); 
+})
