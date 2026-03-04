@@ -37,7 +37,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc --emitDeclarationOnly && cp dist/index.d.ts dist/index.d.mts && cp dist/index.d.ts dist/index.d.cts",
+    "build": "vite build && tsc --emitDeclarationOnly && node -e \"const f=require('fs');f.copyFileSync('dist/index.d.ts','dist/index.d.mts');f.copyFileSync('dist/index.d.ts','dist/index.d.cts')\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src"
   },
