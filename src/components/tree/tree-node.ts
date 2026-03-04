@@ -185,7 +185,7 @@ export class TreeNode {
   private updateToggleCell(): void {
     const valueCell = this.tr.querySelector('.node-value')
     if (!valueCell) return
-    const { data, isFiltered } = this.opts
+    const { data } = this.opts
     if (isObject(data) || isArray(data)) {
       valueCell.innerHTML = ''
       const toggle = createNodeToggle(data, this.collapsed, this.matchHighlightClass(), isObject(data))
@@ -297,7 +297,7 @@ export class TreeNode {
   private renderChildren(): void {
     if (this.childNodes.length > 0) return // already rendered
 
-    const { data, state, originalIndices } = this.opts
+    const { data, state } = this.opts
     const dataToShow = this.showUnfiltered ? this.opts.getOriginalData(this.opts.path) : data
 
     const insertAfter = (ref: HTMLTableRowElement, newRow: HTMLTableRowElement) => {

@@ -2,7 +2,6 @@ import type { JsonValue, Match, Path, Source } from './types'
 import { State } from './state'
 import { Search } from './components/search'
 import { TreeNode } from './components/tree/tree-node'
-// @ts-ignore
 import styles from '../styles/index.css?raw'
 
 export class JsonVista extends HTMLElement {
