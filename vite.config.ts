@@ -6,7 +6,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'JsonVista',
-      fileName: (format) => `json-vista.${format}.js`,
+      fileName: (format) => format === 'umd' ? 'json-vista.umd.cjs' : 'json-vista.es.js',
     },
     rollupOptions: {
       output: {
