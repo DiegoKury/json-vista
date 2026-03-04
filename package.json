@@ -1,25 +1,24 @@
 {
-  "name": "json-explorer",
+  "name": "json-vista",
   "version": "1.0.0",
   "description": "Framework-agnostic JSON tree viewer Web Component with search, filtering, and distinct value analysis",
-  "main": "dist/json-explorer.umd.js",
-  "module": "dist/json-explorer.es.js",
+  "main": "dist/json-vista.umd.js",
+  "module": "dist/json-vista.es.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/json-explorer.es.js",
-      "require": "./dist/json-explorer.umd.js",
+      "import": "./dist/json-vista.es.js",
+      "require": "./dist/json-vista.umd.js",
       "types": "./dist/index.d.ts"
     }
   },
   "files": ["dist"],
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build && tsc --emitDeclarationOnly"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
-    "vite": "^5.0.0",
-    "vite-plugin-dts": "^3.7.0"
+    "vite": "^5.0.0"
   }
 }

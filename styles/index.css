@@ -1,30 +1,28 @@
-/* Styles injected into Shadow DOM — scoped via :host, no leakage */
-
 :host {
-  --je-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --je-font-size: 14px;
-  --je-color: #1e293b;
-  --je-border-color: #e2e8f0;
-  --je-bg: white;
-  --je-surface: #f8fafc;
+  --jv-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --jv-font-size: 14px;
+  --jv-color: #1e293b;
+  --jv-border-color: #e2e8f0;
+  --jv-bg: white;
+  --jv-surface: #f8fafc;
 
-  --je-string-color: #be185d;
-  --je-number-color: #15803d;
-  --je-boolean-color: #1d4ed8;
-  --je-null-color: #64748b;
+  --jv-string-color: #be185d;
+  --jv-number-color: #15803d;
+  --jv-boolean-color: #1d4ed8;
+  --jv-null-color: #64748b;
 
-  --je-match-bg: #bbdefb;
-  --je-key-match-bg: #d1d5db;
+  --jv-match-bg: #bbdefb;
+  --jv-key-match-bg: #fde68a;
 
-  --je-row-even-bg: #fff5f5;
-  --je-row-odd-bg: white;
+  --jv-row-even-bg: #fff5f5;
+  --jv-row-odd-bg: white;
 
-  --je-indent: 20px;
+  --jv-indent: 20px;
 
   display: block;
-  font-family: var(--je-font-family);
-  font-size: var(--je-font-size);
-  color: var(--je-color);
+  font-family: var(--jv-font-family);
+  font-size: var(--jv-font-size);
+  color: var(--jv-color);
   overflow: auto;
   padding: 0.5rem;
 }
@@ -35,8 +33,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0.75rem;
-  background: var(--je-surface);
-  border: 1px solid var(--je-border-color);
+  background: var(--jv-surface);
+  border: 1px solid var(--jv-border-color);
   border-radius: 6px;
   margin-bottom: 1rem;
   font-weight: 600;
@@ -47,75 +45,142 @@
 .source-header a:hover { color: #334155 }
 
 .card {
-  background: var(--je-bg);
-  border: 1px solid var(--je-border-color);
+  background: var(--jv-bg);
+  border: 1px solid var(--jv-border-color);
   border-radius: 8px;
   padding: 1rem;
 }
 
+/* ── Toolbar ─────────────────────────────────────────────── */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--jv-border-color);
+}
+
+.toolbar-sep {
+  display: inline-block;
+  width: 1px;
+  height: 1.1em;
+  background: var(--jv-border-color);
+  align-self: center;
+  margin: 0 0.1rem;
 }
 
 .match-count {
   font-size: 0.8125rem;
   color: #64748b;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */
 .btn {
-  padding: 0.35rem 0.7rem;
-  border: 1px solid var(--je-border-color);
-  border-radius: 4px;
-  background: var(--je-bg);
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--jv-border-color);
+  border-radius: 5px;
+  background: var(--jv-bg);
   cursor: pointer;
   font-size: 0.8125rem;
   white-space: nowrap;
-  transition: background 0.12s;
+  transition: background 0.1s, border-color 0.1s;
   line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
 }
 .btn:hover    { background: #f1f5f9 }
-.btn:disabled { opacity: 0.45; cursor: not-allowed }
-.btn-secondary { background: var(--je-surface) }
+.btn:disabled { opacity: 0.4; cursor: not-allowed }
+.btn-secondary { background: var(--jv-surface) }
+.btn-secondary:hover { background: #eef2f7 }
 .btn-danger    { border-color: #fca5a5; color: #dc2626; background: #fff1f2 }
 .btn-danger:hover { background: #ffe4e6 }
+.btn-active    { background: #e0e7ff; border-color: #a5b4fc; color: #4338ca }
+.btn-active:hover { background: #c7d2fe }
+
+/* Primary search button */
+.btn-search {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: white;
+  font-weight: 500;
+}
+.btn-search:hover:not(:disabled) { background: #4f46e5; border-color: #4f46e5 }
+.btn-search:disabled { background: var(--jv-surface); border-color: var(--jv-border-color); color: #94a3b8 }
 
 /* Icon-style button for inline tree actions */
 .btn-icon {
-  padding: 0.15em 0.35em;
-  height: 1.5em;
+  padding: 0.2em 0.3em;
   border: none;
   background: transparent;
   cursor: pointer;
-  opacity: 0.3;
-  font-size: 0.8125rem;
+  opacity: 0;
+  font-size: 0.875rem;
   line-height: 1;
   border-radius: 3px;
-  transition: opacity 0.12s, background 0.12s;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.1s, background 0.1s;
+  vertical-align: middle;
 }
-.btn-icon:hover { opacity: 1; background: #f1f5f9 }
+tr:hover .btn-icon { opacity: 0.4 }
+.btn-icon:hover { opacity: 1 !important; background: #f1f5f9 }
+
+/* Case-insensitive toggle */
+.btn-case-toggle {
+  padding: 0.28rem 0.4rem;
+  border: 1px solid var(--jv-border-color);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: -0.03em;
+  line-height: 1.4;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.btn-case-toggle:hover { background: var(--jv-surface) }
+.btn-case-toggle.active { background: #e0e7ff; border-color: #a5b4fc; color: #4338ca }
+
+/* Chip toggle (Key / 2nd) */
+.btn-chip {
+  padding: 0.2rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  border: 1px solid var(--jv-border-color);
+  background: transparent;
+  cursor: pointer;
+  color: #94a3b8;
+  white-space: nowrap;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  line-height: 1.4;
+}
+.btn-chip:hover { background: var(--jv-surface); color: #334155 }
+.btn-chip.active { background: #6366f1; border-color: #6366f1; color: white }
 
 /* ── Form elements ───────────────────────────────────────── */
 .input {
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--je-border-color);
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--jv-border-color);
   border-radius: 4px;
   font-size: 0.8125rem;
   outline: none;
   line-height: 1.4;
+  min-width: 0;
+  flex: 1;
 }
 .input:focus { border-color: #818cf8 }
 
 .select {
-  padding: 0.35rem 1.75rem 0.35rem 0.5rem;
-  border: 1px solid var(--je-border-color);
+  padding: 0.3rem 1.75rem 0.3rem 0.5rem;
+  border: 1px solid var(--jv-border-color);
   border-radius: 4px;
   font-size: 0.8125rem;
-  background: var(--je-bg);
+  background: var(--jv-bg);
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
@@ -123,31 +188,54 @@
   background-position: right 0.5rem center;
   outline: none;
   line-height: 1.4;
-}
-.select:focus { border-color: #818cf8 }
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8125rem;
-  cursor: pointer;
   white-space: nowrap;
 }
+.select:focus { border-color: #818cf8 }
 
 /* ── Search panel ────────────────────────────────────────── */
 .search-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
 }
 
 .search-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
   align-items: center;
+}
+
+.search-row--sub {
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--jv-border-color);
+  margin-left: 0.1rem;
+}
+
+.search-key-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.search-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+  margin: 0.1rem 0;
+}
+.search-divider::before,
+.search-divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--jv-border-color);
 }
 
 /* ── Tree table ──────────────────────────────────────────── */
@@ -156,8 +244,8 @@
   border-collapse: collapse;
 }
 
-.json-tree tr:nth-child(even) { background: var(--je-row-even-bg) }
-.json-tree tr:nth-child(odd)  { background: var(--je-row-odd-bg) }
+.json-tree tr:nth-child(even) { background: var(--jv-row-even-bg) }
+.json-tree tr:nth-child(odd)  { background: var(--jv-row-odd-bg) }
 
 .node-key {
   cursor: pointer;
@@ -167,10 +255,9 @@
 .node-key.leaf { cursor: default }
 
 .node-actions {
-  display: flex;
-  align-items: center;
   white-space: nowrap;
   width: 1%;
+  padding: 0 0.1rem;
 }
 
 .node-value { padding-left: 0.25rem }
@@ -182,24 +269,25 @@
 .node-toggle.clickable { cursor: pointer }
 
 /* ── Scalar value colors ─────────────────────────────────── */
-.scalar-string  { color: var(--je-string-color) }
-.scalar-number  { color: var(--je-number-color) }
-.scalar-boolean { color: var(--je-boolean-color) }
-.scalar-object  { color: var(--je-null-color) }
+.scalar-string  { color: var(--jv-string-color) }
+.scalar-number  { color: var(--jv-number-color) }
+.scalar-boolean { color: var(--jv-boolean-color) }
+.scalar-object  { color: var(--jv-null-color) }
 
 /* ── Match highlights ────────────────────────────────────── */
-.highlight-match { background: var(--je-match-bg) }
-.highlight-key   { background: var(--je-key-match-bg) }
+.highlight-match { background: var(--jv-match-bg) }
+.highlight-key   { background: var(--jv-key-match-bg) }
+.node-key.on-match-path { border-left: 2px solid #90caf9 }
 
 /* ── Loading spinner ─────────────────────────────────────── */
-@keyframes je-spin { to { transform: rotate(360deg) } }
+@keyframes jv-spin { to { transform: rotate(360deg) } }
 .spinner {
   width: 1em;
   height: 1em;
-  border: 2px solid var(--je-border-color);
+  border: 2px solid var(--jv-border-color);
   border-top-color: #6366f1;
   border-radius: 50%;
-  animation: je-spin 0.5s linear infinite;
+  animation: jv-spin 0.5s linear infinite;
   display: inline-block;
   vertical-align: middle;
 }
@@ -216,7 +304,7 @@
 }
 
 .dialog {
-  background: var(--je-bg);
+  background: var(--jv-bg);
   border-radius: 8px;
   padding: 1.5rem;
   width: min(50vw, 640px);
@@ -243,7 +331,7 @@
 
 .copy-feedback {
   font-size: 0.8125rem;
-  color: var(--je-number-color);
+  color: var(--jv-number-color);
 }
 
 .dialog table {
@@ -254,13 +342,13 @@
 .dialog th {
   text-align: left;
   padding: 0.4rem 0.5rem;
-  border-bottom: 2px solid var(--je-border-color);
+  border-bottom: 2px solid var(--jv-border-color);
   font-size: 0.8125rem;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
 }
-.dialog th:hover { background: var(--je-surface) }
+.dialog th:hover { background: var(--jv-surface) }
 
 .dialog td {
   padding: 0.3rem 0.5rem;

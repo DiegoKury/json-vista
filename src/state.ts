@@ -8,6 +8,7 @@ export class State {
   expandToMatch = false
   collapseDepth: number | null = null
   firstMatchPath: Path | null = null
+  showNullValues = false
 
   private listeners = new Set<() => void>()
 
@@ -73,6 +74,11 @@ export class State {
 
   setFirstMatchPath(path: Path | null): void {
     this.firstMatchPath = path
+    this.notify()
+  }
+
+  setShowNullValues(value: boolean): void {
+    this.showNullValues = value
     this.notify()
   }
 

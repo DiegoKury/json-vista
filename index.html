@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>json-vista playground</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box }
+    body {
+      margin: 0;
+      padding: 2rem;
+      background: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    h1 {
+      margin: 0 0 1.5rem;
+      font-size: 1.125rem;
+      color: #334155;
+      font-weight: 600;
+    }
+    json-vista {
+      display: block;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+<body>
+  <h1>json-vista playground</h1>
+  <json-vista id="viewer"></json-vista>
+
+  <script type="module">
+    import { JsonVista } from '/src/index.ts'
+
+    const el = document.getElementById('viewer')
+
+    el.source = { name: 'Sample API Response', url: 'https://example.com/api/data' }
+
+    el.data = {
+      meta: {
+        page: 1,
+        perPage: 3,
+        total: 128,
+        generatedAt: '2024-11-01T09:30:00Z',
+        flags: { beta: true, cacheEnabled: false, debugMode: null }
+      },
+      users: [
+        {
+          id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          name: 'Alice Nakamura',
+          email: 'alice@example.com',
+          age: 31,
+          active: true,
+          role: 'admin',
+          address: {
+            street: '12 Maple Ave',
+            city: 'Portland',
+            state: 'OR',
+            zip: '97201',
+            country: 'US'
+          },
+          scores: [98, 87, 100, 73],
+          tags: ['power-user', 'beta-tester'],
+          preferences: {
+            theme: 'dark',
+            notifications: { email: true, sms: false, push: true },
+            language: 'en'
+          },
+          lastLogin: '2024-10-31T22:14:05Z'
+        },
+        {
+          id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
+          name: 'Ben Okafor',
+          email: 'ben@example.com',
+          age: 25,
+          active: true,
+          role: 'editor',
+          address: {
+            street: '88 River Rd',
+            city: 'Austin',
+            state: 'TX',
+            zip: '73301',
+            country: 'US'
+          },
+          scores: [70, 85, 60],
+          tags: ['new-user'],
+          preferences: {
+            theme: 'light',
+            notifications: { email: true, sms: true, push: false },
+            language: 'en'
+          },
+          lastLogin: '2024-10-28T14:55:22Z'
+        },
+        {
+          id: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
+          name: 'Clara Schmidt',
+          email: 'clara@example.com',
+          age: 40,
+          active: false,
+          role: 'viewer',
+          address: {
+            street: '5 Birch Lane',
+            city: 'Berlin',
+            state: null,
+            zip: '10115',
+            country: 'DE'
+          },
+          scores: [55, 62, 80, 91, 74],
+          tags: ['power-user', 'legacy'],
+          preferences: {
+            theme: 'dark',
+            notifications: { email: false, sms: false, push: false },
+            language: 'de'
+          },
+          lastLogin: '2024-09-14T08:01:00Z'
+        }
+      ]
+    }
+  </script>
+</body>
+</html>

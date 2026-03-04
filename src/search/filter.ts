@@ -80,6 +80,12 @@ export const filterData = (
       if (typeof value === 'boolean') {
         return value.toString().toLowerCase() === term.toLowerCase()
       }
+      if (typeof value === 'number') {
+        const str = String(value)
+        const a = ci ? str.toLowerCase() : str
+        const b = ci ? term.toLowerCase() : term
+        return sType === 'exact' ? a === b : a.includes(b)
+      }
     }
 
     if (type === 'number' && typeof value === 'number') {
@@ -209,36 +215,42 @@ export const filterData = (
       }
 
       if (Array.isArray(fNode)) {
+        const oArr = Array.isArray(oNode) ? oNode : []
         const filtered: JsonValue[] = []
         let keep = false
-        const oArr = Array.isArray(oNode) ? oNode : []
-        for (let i = 0; i < fNode.length; i++) {
-          const result = recurse(fNode[i], oArr[i] ?? null, [...p, i])
+        for (let i = 0; i < (fNode as JsonValue[]).length; i++) {
+          const item = (fNode as JsonValue[])[i]
+          if (item === undefined) continue
+          const result = recurse(item, oArr[i] ?? null, [...p, i])
           if (result.keep) { filtered.push(result.data); keep = true }
         }
         return keep ? { keep: true, data: filtered } : { keep: false, data: null }
       }
 
       const oObj = (typeof oNode === 'object' && oNode !== null && !Array.isArray(oNode))
-        ? (oNode as Record<string, JsonValue>)
-        : {}
-      const filteredObj: Record<string, JsonValue> = {}
-      let keep = false
+        ? (oNode as Record<string, JsonValue>) : {}
+
+      // Check for direct key+value matches within this object
+      let hasDirectMatch = false
       for (const [key, value] of Object.entries(fNode as Record<string, JsonValue>)) {
         const itemPath: Path = [...p, key]
         const keyMatch = keyEnabled ? matchesKey(key, keyTerm, keyType, ci) : true
         const valMatch = matchesValue(oObj[key] ?? null, term, type, sType, condition, ci)
-        const childResult =
-          typeof value === 'object' && value !== null
-            ? recurse(value, oObj[key] ?? null, itemPath)
-            : { keep: false, data: null }
+        if (keyMatch && valMatch) {
+          matches.push({ path: itemPath, key, value, matchType: keyMatch ? 'both' : 'value' })
+          hasDirectMatch = true
+        }
+      }
+      // Keep the full primary object if any key matched secondary
+      if (hasDirectMatch) return { keep: true, data: fNode }
 
-        if ((keyMatch && valMatch) || childResult.keep) {
-          filteredObj[key] = childResult.keep ? childResult.data! : value
-          keep = true
-          if (valMatch) {
-            matches.push({ path: itemPath, key, value, matchType: keyMatch ? 'both' : 'value' })
-          }
+      // No direct match — recurse into nested collections
+      const filteredObj: Record<string, JsonValue> = {}
+      let keep = false
+      for (const [key, value] of Object.entries(fNode as Record<string, JsonValue>)) {
+        if (typeof value === 'object' && value !== null) {
+          const result = recurse(value, oObj[key] ?? null, [...p, key])
+          if (result.keep) { filteredObj[key] = result.data; keep = true }
         }
       }
       return keep ? { keep: true, data: filteredObj } : { keep: false, data: null }
@@ -262,41 +274,10 @@ export const filterData = (
       secondaryNumericCondition!, isSecondaryCaseInsensitive!,
       secondaryKeySearchTerm!, secondaryKeySearchType!, isSecondaryKeySearchEnabled!
     )
-    finalData = mergeResults(finalData, secondaryResult.data)
+    finalData = secondaryResult.data
     matchedCount = matches.length
   }
 
   return { data: finalData!, matchedCount, originalIndices, matches }
 }
 
-const mergeResults = (primary: JsonValue, secondary: JsonValue): JsonValue => {
-  if (primary == null || secondary == null) return undefined as unknown as JsonValue
-
-  if (Array.isArray(primary) && Array.isArray(secondary)) {
-    const merged: JsonValue[] = []
-    const len = Math.min(primary.length, secondary.length)
-    for (let i = 0; i < len; i++) {
-      const val = mergeResults(primary[i], secondary[i])
-      if (val !== undefined) merged.push(val)
-    }
-    return merged.length > 0 ? merged : undefined as unknown as JsonValue
-  }
-
-  if (isPlainObject(primary) && isPlainObject(secondary)) {
-    const p = primary as Record<string, JsonValue>
-    const s = secondary as Record<string, JsonValue>
-    const merged: Record<string, JsonValue> = {}
-    for (const key in p) {
-      if (Object.prototype.hasOwnProperty.call(s, key)) {
-        const val = mergeResults(p[key], s[key])
-        if (val !== undefined) merged[key] = val
-      }
-    }
-    return Object.keys(merged).length > 0 ? merged : undefined as unknown as JsonValue
-  }
-
-  return primary === secondary ? primary : undefined as unknown as JsonValue
-}
-
-const isPlainObject = (val: JsonValue): boolean =>
-  typeof val === 'object' && val !== null && !Array.isArray(val)

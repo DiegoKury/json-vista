@@ -5,7 +5,7 @@ import { TreeNode } from './components/tree/tree-node'
 // @ts-ignore
 import styles from '../styles/index.css?raw'
 
-export class JsonExplorer extends HTMLElement {
+export class JsonVista extends HTMLElement {
   private shadow: ShadowRoot
   private state: State
   private search: Search | null = null
@@ -22,7 +22,6 @@ export class JsonExplorer extends HTMLElement {
   private originalIndices: Record<string, string | number> = {}
   private isFiltered = false
   private isSorted = false
-  private showNullValues = false
 
   constructor() {
     super()
@@ -74,6 +73,7 @@ export class JsonExplorer extends HTMLElement {
     this.originalIndices = {}
     this.isFiltered = false
     this.isSorted = false
+    this.state.setShowNullValues(false)
     this.state.resetHiddenPaths()
     this.state.setFirstMatchPath(null)
   }
@@ -157,10 +157,10 @@ export class JsonExplorer extends HTMLElement {
         this.originalIndices = result.originalIndices
         this.isFiltered = true
         this.state.setExpandToMatch(false)
+        this.rerenderTree()
         this.state.setFirstMatchPath(
           this.findFirstMatchPath(this._data, result.matches, result.originalIndices)
         )
-        this.rerenderTree()
         this.renderToolbar(toolbar)
       },
       () => {
@@ -204,65 +204,71 @@ export class JsonExplorer extends HTMLElement {
   private renderToolbar(toolbar: HTMLElement): void {
     toolbar.innerHTML = ''
 
-    const btn = (label: string, onClick: () => void, extraClass = ''): HTMLButtonElement => {
+    const btn = (label: string, onClick: () => void, extraClass = '', title = ''): HTMLButtonElement => {
       const b = document.createElement('button')
       b.className = `btn${extraClass ? ' ' + extraClass : ''}`
       b.textContent = label
+      if (title) b.title = title
       b.addEventListener('click', onClick)
       return b
     }
 
-    const sortBtn = btn(this.isSorted ? 'Sorted A→Z' : 'Sort A→Z', () => {
-      this.displayData = this.sortData(this.displayData)
-      this.isSorted = true
-      this.rerenderTree()
-      this.renderToolbar(toolbar)
-    }, 'btn-secondary')
-    if (this.isSorted) (sortBtn as HTMLButtonElement).disabled = true
-    toolbar.appendChild(sortBtn)
-
-    toolbar.appendChild(btn(this.showNullValues ? 'Hide nulls' : 'Show nulls', () => {
-      this.showNullValues = !this.showNullValues
-      this.rerenderTree()
-      this.renderToolbar(toolbar)
-    }, 'btn-secondary'))
-
-    toolbar.appendChild(btn(this.state.isPatternHideMode ? 'Edit visibility' : 'Done', () => {
-      this.state.toggleHideMode()
-      this.renderToolbar(toolbar)
-    }))
-
-    if (!this.state.isPatternHideMode) {
-      toolbar.appendChild(btn('Reset hidden', () => {
-        this.state.resetHiddenPaths()
-      }, 'btn-danger'))
+    const sep = (): HTMLSpanElement => {
+      const s = document.createElement('span')
+      s.className = 'toolbar-sep'
+      return s
     }
 
+    // ── Utility group ──────────────────────────────────────
+    const sortBtn = btn(
+      this.isSorted ? 'Sorted A→Z' : 'Sort A→Z',
+      () => { this.displayData = this.sortData(this.displayData); this.isSorted = true; this.rerenderTree(); this.renderToolbar(toolbar) },
+      'btn-secondary',
+      this.isSorted ? 'Keys are already sorted' : 'Sort all keys alphabetically'
+    )
+    if (this.isSorted) sortBtn.disabled = true
+    toolbar.appendChild(sortBtn)
+
+    toolbar.appendChild(btn(
+      this.state.showNullValues ? 'Hide nulls' : 'Show nulls',
+      () => { this.state.setShowNullValues(!this.state.showNullValues); this.renderToolbar(toolbar) },
+      'btn-secondary',
+      this.state.showNullValues ? 'Hide null values' : 'Show null values'
+    ))
+
+    toolbar.appendChild(sep())
+
+    toolbar.appendChild(btn(
+      this.state.isPatternHideMode ? 'Hide props' : '✓ Done hiding',
+      () => { this.state.toggleHideMode(); this.renderToolbar(toolbar) },
+      this.state.isPatternHideMode ? '' : 'btn-active',
+      this.state.isPatternHideMode ? 'Click checkboxes on rows to hide properties' : 'Exit hide-property mode'
+    ))
+
+    if (!this.state.isPatternHideMode) {
+      toolbar.appendChild(btn('↺ Reset', () => { this.state.resetHiddenPaths() }, 'btn-danger', 'Restore all hidden properties'))
+    }
+
+    // ── Filter group ───────────────────────────────────────
     if (this.isFiltered) {
-      toolbar.appendChild(btn('Next match', () => this.nextMatch()))
-      const expandBtn = btn(
-        this.state.expandToMatch ? 'Cancel expand' : 'Expand matches',
-        () => {
-          this.state.setExpandToMatch(!this.state.expandToMatch)
-          this.renderToolbar(toolbar)
-        }
-      )
-      expandBtn.title = this.state.expandToMatch ? 'Cancel expand' : 'Expand tree to show all matches'
-      toolbar.appendChild(expandBtn)
+      toolbar.appendChild(sep())
 
       const countSpan = document.createElement('span')
       countSpan.className = 'match-count'
       countSpan.textContent = `${this.matchCount} match${this.matchCount !== 1 ? 'es' : ''}`
       toolbar.appendChild(countSpan)
 
-      // Clear button via search component
-      const clearBtn = document.createElement('button')
-      clearBtn.className = 'btn btn-danger'
-      clearBtn.textContent = 'Clear'
-      clearBtn.addEventListener('click', () => {
-        this.search?.clear()
-      })
-      toolbar.appendChild(clearBtn)
+      toolbar.appendChild(btn('→ Next', () => this.nextMatch(), '', 'Jump to next match'))
+
+      const expandBtn = btn(
+        '⇕ Expand',
+        () => { this.state.setExpandToMatch(!this.state.expandToMatch); this.renderToolbar(toolbar) },
+        this.state.expandToMatch ? 'btn-active' : '',
+        this.state.expandToMatch ? 'Collapse expanded matches' : 'Expand tree to reveal all matches'
+      )
+      toolbar.appendChild(expandBtn)
+
+      toolbar.appendChild(btn('✕ Clear', () => { this.search?.clear() }, 'btn-danger', 'Clear search and restore full tree'))
     }
   }
 
@@ -286,7 +292,6 @@ export class JsonExplorer extends HTMLElement {
       getOriginalData: (path) => this.getOriginalData(path),
       isFiltered: this.isFiltered,
       originalIndices: this.originalIndices,
-      showNullValues: this.showNullValues,
       state: this.state,
       root: this.shadow,
     })
@@ -302,4 +307,4 @@ export class JsonExplorer extends HTMLElement {
   }
 }
 
-customElements.define('json-explorer', JsonExplorer)
+customElements.define('json-vista', JsonVista)

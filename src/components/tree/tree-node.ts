@@ -1,5 +1,11 @@
 import type { JsonValue, Path, Match, HiddenPath } from '../../types'
 import type { State } from '../../state'
+
+// SVG icons for inline tree actions
+const iconEyeOff = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+const iconEye = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+const iconEyeFilter = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/><line x1="19" y1="5" x2="22" y2="2"/></svg>`
+const iconBarChart = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>`
 import { isObject, isArray, isCollectionEmpty, cleanData, getIndentationStyle, getGeneralizedSegment } from '../../utils/utils'
 import { isPathHidden } from '../../utils/path-utils'
 import { createScalarDisplay } from './scalar-display'
@@ -19,7 +25,6 @@ interface TreeNodeOptions {
   parentUnfiltered?: boolean
   parentExpanded?: boolean
   originalIndices?: Record<string, string | number>
-  showNullValues?: boolean
   state: State
   root: ShadowRoot | HTMLElement
 }
@@ -45,7 +50,7 @@ export class TreeNode {
 
   constructor(opts: TreeNodeOptions) {
     this.opts = opts
-    this.collapsed = opts.depth > 0
+    this.collapsed = true
     this.expandedByClick = opts.parentExpanded ?? false
     this.tr = document.createElement('tr')
     this.unsubscribe = opts.state.subscribe(() => this.onStateChange())
@@ -74,13 +79,12 @@ export class TreeNode {
     }
 
     // Handle firstMatchPath auto-expand
-    if (
-      (isObject(this.opts.data) || isArray(this.opts.data)) &&
-      state.firstMatchPath &&
-      state.firstMatchPath[0] === this.opts.name
-    ) {
-      this.setCollapsed(false)
-      state.setFirstMatchPath(state.firstMatchPath.slice(1))
+    if (state.firstMatchPath && state.firstMatchPath[0] === this.opts.name) {
+      const remaining = state.firstMatchPath.slice(1)
+      if (isObject(this.opts.data) || isArray(this.opts.data)) {
+        this.setCollapsed(false)
+      }
+      state.setFirstMatchPath(remaining.length > 0 ? remaining : null)
     }
 
     // Handle expandToMatch
@@ -89,8 +93,9 @@ export class TreeNode {
     }
 
     // Re-check visibility
-    const hidden = isPathHidden(path, state.hiddenPaths)
-    this.tr.style.display = hidden && !state.previewHidden ? 'none' : ''
+    const hidden = (isPathHidden(path, state.hiddenPaths) && !state.previewHidden)
+      || (this.opts.data === null && !state.showNullValues)
+    this.tr.style.display = hidden ? 'none' : ''
     this.updateChildVisibility()
 
     this.refreshActions()
@@ -168,6 +173,7 @@ export class TreeNode {
     this.collapsed = value
     this.updateToggleCell()
     this.updateChildVisibility()
+    this.refreshActions()
   }
 
   private handleToggle(altKey = false): void {
@@ -192,13 +198,16 @@ export class TreeNode {
   }
 
   private updateChildVisibility(): void {
+    const { state } = this.opts
     for (const child of this.childNodes) {
-      const childHidden = isPathHidden(child.opts.path, this.opts.state.hiddenPaths) && !this.opts.state.previewHidden
-      const parentCollapsed = this.collapsed
-      child.rows.forEach(row => {
-        row.style.display = parentCollapsed || childHidden ? 'none' : ''
-      })
-      if (!parentCollapsed) child.updateChildVisibility()
+      const childHidden = (isPathHidden(child.opts.path, state.hiddenPaths) && !state.previewHidden)
+        || (child.opts.data === null && !state.showNullValues)
+      if (this.collapsed || childHidden) {
+        child.rows.forEach(row => { row.style.display = 'none' })
+      } else {
+        child.tr.style.display = ''
+        child.updateChildVisibility()
+      }
     }
   }
 
@@ -223,8 +232,8 @@ export class TreeNode {
     } else {
       const eraseBtn = document.createElement('button')
       eraseBtn.className = 'btn-icon'
-      eraseBtn.title = 'Hide by pattern'
-      eraseBtn.textContent = '⌫'
+      eraseBtn.title = 'Hide this property everywhere (by pattern)'
+      eraseBtn.innerHTML = iconEyeOff
       eraseBtn.addEventListener('click', () => {
         const pattern = path.map((seg, i) => i < path.length - 1 ? getGeneralizedSegment(seg) : seg) as HiddenPath
         state.toggleHidePath(pattern)
@@ -237,8 +246,8 @@ export class TreeNode {
       revealBtn.className = 'btn-icon'
       revealBtn.title = this.showUnfiltered
         ? 'Show only search results'
-        : `Reveal all in this ${isArray(data) ? 'array' : 'object'}`
-      revealBtn.textContent = this.showUnfiltered ? '◑' : '○'
+        : `Reveal all ${isArray(data) ? 'items' : 'keys'} in this ${isArray(data) ? 'array' : 'object'}`
+      revealBtn.innerHTML = this.showUnfiltered ? iconEyeFilter : iconEye
       revealBtn.addEventListener('click', () => {
         this.showUnfiltered = !this.showUnfiltered
         this.opts.state.setCollapseDepth(this.showUnfiltered ? null : this.opts.depth)
@@ -251,8 +260,8 @@ export class TreeNode {
     if (this.opts.depth > 1 && !isCollection) {
       const distinctBtn = document.createElement('button')
       distinctBtn.className = 'btn-icon'
-      distinctBtn.title = 'Show distinct values'
-      distinctBtn.textContent = '≡'
+      distinctBtn.title = 'Show distinct values across all items'
+      distinctBtn.innerHTML = iconBarChart
       distinctBtn.addEventListener('click', () => {
         const values = this.collectDistinctValues(path)
         const counts = countBy(values)
@@ -288,7 +297,7 @@ export class TreeNode {
   private renderChildren(): void {
     if (this.childNodes.length > 0) return // already rendered
 
-    const { data, state, originalIndices, showNullValues } = this.opts
+    const { data, state, originalIndices } = this.opts
     const dataToShow = this.showUnfiltered ? this.opts.getOriginalData(this.opts.path) : data
 
     const insertAfter = (ref: HTMLTableRowElement, newRow: HTMLTableRowElement) => {
@@ -306,7 +315,6 @@ export class TreeNode {
       expandAll: this.deepExpand,
       parentUnfiltered: this.showUnfiltered || (this.opts.parentUnfiltered ?? false),
       originalIndices: this.opts.originalIndices,
-      showNullValues: this.opts.showNullValues,
       state,
       root: this.opts.root,
     }
@@ -321,7 +329,7 @@ export class TreeNode {
 
     if (Array.isArray(dataToShow)) {
       (dataToShow as JsonValue[]).forEach((value, index) => {
-        if (value === undefined || (value === null && !showNullValues)) return
+        if (value === undefined) return
         insertChild(new TreeNode({
           ...sharedChildProps,
           name: index,
@@ -332,7 +340,7 @@ export class TreeNode {
       })
     } else if (typeof dataToShow === 'object' && dataToShow !== null) {
       Object.entries(dataToShow as Record<string, JsonValue>).forEach(([key, value]) => {
-        if (value === undefined || (value === null && !showNullValues)) return
+        if (value === undefined) return
         insertChild(new TreeNode({
           ...sharedChildProps,
           name: key,
@@ -354,7 +362,8 @@ export class TreeNode {
 
     // Key cell
     const keyCell = document.createElement('td')
-    keyCell.className = `node-key${isCollectionEmpty(data) ? ' leaf' : ''}`
+    const onMatchPath = isCollection && isFiltered && this.containsMatch()
+    keyCell.className = `node-key${isCollectionEmpty(data) ? ' leaf' : ''}${onMatchPath ? ' on-match-path' : ''}`
     keyCell.style.cssText = getIndentationStyle(depth)
     if (!isCollectionEmpty(data)) {
       keyCell.addEventListener('click', (e) => this.handleToggle((e as MouseEvent).altKey))
@@ -390,13 +399,14 @@ export class TreeNode {
     }
     this.tr.appendChild(valueCell)
 
-    // Handle depth-0 auto-expand when filtered
-    if (isFiltered && depth === 0) {
+    // Always auto-expand root
+    if (depth === 0) {
       this.setCollapsed(false)
     }
 
-    // Sync initial state
-    const hidden = isPathHidden(path, state.hiddenPaths) && !state.previewHidden
+    // Sync initial visibility
+    const hidden = (isPathHidden(path, state.hiddenPaths) && !state.previewHidden)
+      || (data === null && !state.showNullValues)
     if (hidden) this.tr.style.display = 'none'
   }
 
