@@ -1,29 +1,25 @@
 {
   "name": "json-explorer",
   "version": "1.0.0",
-  "description": "Interactive JSON tree viewer with advanced search, filtering, and distinct value analysis",
+  "description": "Framework-agnostic JSON tree viewer Web Component with search, filtering, and distinct value analysis",
   "main": "dist/json-explorer.umd.js",
   "module": "dist/json-explorer.es.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/json-explorer.es.js",
-      "require": "./dist/json-explorer.umd.js"
-    },
-    "./styles": "./dist/style.css"
+      "require": "./dist/json-explorer.umd.js",
+      "types": "./dist/index.d.ts"
+    }
   },
   "files": ["dist"],
   "scripts": {
     "dev": "vite",
     "build": "vite build"
   },
-  "peerDependencies": {
-    "react": ">=17",
-    "react-dom": ">=17"
-  },
   "devDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "typescript": "^5.3.0",
     "vite": "^5.0.0",
-    "@vitejs/plugin-react": "^4.0.0"
+    "vite-plugin-dts": "^3.7.0"
   }
 }
