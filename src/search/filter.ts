@@ -201,30 +201,31 @@ export const filterData = (
     keyType: SearchType,
     keyEnabled: boolean,
     path: Path = []
-  ): { keep: boolean; data: JsonValue } => {
-    const recurse = (fNode: JsonValue, oNode: JsonValue, p: Path): { keep: boolean; data: JsonValue } => {
+  ): { keep: boolean; data: JsonValue; matchedCount: number } => {
+    const recurse = (fNode: JsonValue, oNode: JsonValue, p: Path): { keep: boolean; data: JsonValue; matchedCount: number } => {
       if (typeof fNode !== 'object' || fNode === null) {
         const key = p[p.length - 1]
         const keyMatch = keyEnabled ? matchesKey(key, keyTerm, keyType, ci) : true
         const valMatch = matchesValue(oNode, term, type, sType, condition, ci)
         if (keyMatch && valMatch) {
           matches.push({ path: p, key, value: fNode, matchType: 'both' })
-          return { keep: true, data: fNode }
+          return { keep: true, data: fNode, matchedCount: 1 }
         }
-        return { keep: false, data: null }
+        return { keep: false, data: null, matchedCount: 0 }
       }
 
       if (Array.isArray(fNode)) {
         const oArr = Array.isArray(oNode) ? oNode : []
         const filtered: JsonValue[] = []
         let keep = false
+        let matchedCount = 0
         for (let i = 0; i < (fNode as JsonValue[]).length; i++) {
           const item = (fNode as JsonValue[])[i]
           if (item === undefined) continue
           const result = recurse(item, oArr[i] ?? null, [...p, i])
-          if (result.keep) { filtered.push(result.data); keep = true }
+          if (result.keep) { filtered.push(result.data); keep = true; matchedCount += result.matchedCount }
         }
-        return keep ? { keep: true, data: filtered } : { keep: false, data: null }
+        return keep ? { keep: true, data: filtered, matchedCount } : { keep: false, data: null, matchedCount: 0 }
       }
 
       const oObj = (typeof oNode === 'object' && oNode !== null && !Array.isArray(oNode))
@@ -232,6 +233,7 @@ export const filterData = (
 
       // Check for direct key+value matches within this object
       let hasDirectMatch = false
+      let directMatchCount = 0
       for (const [key, value] of Object.entries(fNode as Record<string, JsonValue>)) {
         const itemPath: Path = [...p, key]
         const keyMatch = keyEnabled ? matchesKey(key, keyTerm, keyType, ci) : true
@@ -239,21 +241,23 @@ export const filterData = (
         if (keyMatch && valMatch) {
           matches.push({ path: itemPath, key, value, matchType: keyMatch ? 'both' : 'value' })
           hasDirectMatch = true
+          directMatchCount++
         }
       }
       // Keep the full primary object if any key matched secondary
-      if (hasDirectMatch) return { keep: true, data: fNode }
+      if (hasDirectMatch) return { keep: true, data: fNode, matchedCount: directMatchCount }
 
       // No direct match — recurse into nested collections
       const filteredObj: Record<string, JsonValue> = {}
       let keep = false
+      let matchedCount = 0
       for (const [key, value] of Object.entries(fNode as Record<string, JsonValue>)) {
         if (typeof value === 'object' && value !== null) {
           const result = recurse(value, oObj[key] ?? null, [...p, key])
-          if (result.keep) { filteredObj[key] = result.data; keep = true }
+          if (result.keep) { filteredObj[key] = result.data; keep = true; matchedCount += result.matchedCount }
         }
       }
-      return keep ? { keep: true, data: filteredObj } : { keep: false, data: null }
+      return keep ? { keep: true, data: filteredObj, matchedCount } : { keep: false, data: null, matchedCount: 0 }
     }
 
     return recurse(filteredNode, originalNode, path)
@@ -275,7 +279,7 @@ export const filterData = (
       secondaryKeySearchTerm!, secondaryKeySearchType!, isSecondaryKeySearchEnabled!
     )
     finalData = secondaryResult.data
-    matchedCount = matches.length
+    matchedCount = secondaryResult.matchedCount
   }
 
   return { data: finalData!, matchedCount, originalIndices, matches }
