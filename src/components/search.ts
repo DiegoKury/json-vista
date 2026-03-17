@@ -283,7 +283,7 @@ export class Search {
         s.secondarySearchType,
         s.secondaryNumericCondition,
         s.isSecondaryCaseInsensitive,
-        v => { this.secondarySearchTerm = v },
+        v => { this.secondarySearchTerm = v; updateSearchBtn() },
         () => this.secondarySearchTerm.trim() && this.search(),
         v => this.set('secondaryPropertyType', v as PropertyType),
         v => this.set('secondarySearchType', v as SearchType),
@@ -296,7 +296,7 @@ export class Search {
         this.el.appendChild(this.makeKeyRow(
           this.secondaryKeySearchTerm,
           s.secondaryKeySearchType,
-          v => { this.secondaryKeySearchTerm = v },
+          v => { this.secondaryKeySearchTerm = v; updateSearchBtn() },
           () => this.secondaryKeySearchTerm.trim() && this.search(),
           v => this.set('secondaryKeySearchType', v as SearchType)
         ))
