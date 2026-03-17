@@ -16,12 +16,16 @@ export class State {
     try {
       const saved = JSON.parse(localStorage.getItem('hiddenPaths') || '[]')
       const session = JSON.parse(sessionStorage.getItem('hideProps') || '[]')
+      const seen = new Set<string>()
       this.hiddenPaths = [
-        ...new Set([
-          ...(Array.isArray(saved) ? saved : []),
-          ...(Array.isArray(session) ? session : []),
-        ]),
-      ] as HiddenPath[]
+        ...(Array.isArray(saved) ? saved : []),
+        ...(Array.isArray(session) ? session : []),
+      ].filter(p => {
+        const key = JSON.stringify(p)
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      }) as HiddenPath[]
       sessionStorage.removeItem('hideProps')
     } catch {
       // ignore storage errors
