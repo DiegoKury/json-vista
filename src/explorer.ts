@@ -75,6 +75,7 @@ export class JsonVista extends HTMLElement {
     this.state.setShowNullValues(false)
     this.state.resetHiddenPaths()
     this.state.setFirstMatchPath(null)
+    this.state.setExpandToPath(null)
   }
 
   private getOriginalData(path: Path): JsonValue {
@@ -156,6 +157,7 @@ export class JsonVista extends HTMLElement {
         this.originalIndices = result.originalIndices
         this.isFiltered = true
         this.state.setExpandToMatch(false)
+        this.state.setExpandToPath(null)
         this.rerenderTree()
         this.state.setFirstMatchPath(
           this.findFirstMatchPath(this._data, result.matches, result.originalIndices)
@@ -171,6 +173,7 @@ export class JsonVista extends HTMLElement {
         this.isSorted = false
         this.state.resetHiddenPaths()
         this.state.setFirstMatchPath(null)
+        this.state.setExpandToPath(null)
         this.rerenderTree()
         this.renderToolbar(toolbar)
       }
@@ -258,7 +261,9 @@ export class JsonVista extends HTMLElement {
       countSpan.textContent = `${pos}${this.matchCount} match${this.matchCount !== 1 ? 'es' : ''}`
       toolbar.appendChild(countSpan)
 
-      toolbar.appendChild(btn('→ Next', () => this.nextMatch(), '', 'Jump to next match'))
+      const nextLabel = this.currentMatchIndex === -1 ? '→ Jump to first' : '→ Next'
+      const nextBtn = btn(nextLabel, () => this.nextMatch(), 'btn-next', 'Jump to next match')
+      toolbar.appendChild(nextBtn)
 
       const expandBtn = btn(
         '⇕ Expand',
@@ -289,8 +294,13 @@ export class JsonVista extends HTMLElement {
     this.currentMatchIndex = (this.currentMatchIndex + 1) % this._matches.length
     const match = this._matches[this.currentMatchIndex]
 
-    // Expand tree nodes along the match's path so the row is visible in the DOM
-    this.state.setFirstMatchPath([...match.path])
+    // Collapse all non-root nodes, then expand only the exact path to this match.
+    // setExpandToPath uses full-path prefix matching so only ancestors of this
+    // specific match are opened — setFirstMatchPath is not used here because it
+    // matches by node name only and would expand every node with the same name.
+    this.state.setCollapseDepth(0)
+    this.state.setCollapseDepth(null)
+    this.state.setExpandToPath([...match.path])
 
     // Defer scroll + highlight until after the expansion has updated the DOM
     requestAnimationFrame(() => {
@@ -310,6 +320,10 @@ export class JsonVista extends HTMLElement {
       const pos = this.currentMatchIndex >= 0 ? `${this.currentMatchIndex + 1} / ` : ''
       counter.textContent = `${pos}${this.matchCount} match${this.matchCount !== 1 ? 'es' : ''}`
     }
+    // Switch button label from "Jump to first" → "Next" after first navigation
+    const nextBtn = this.shadow.querySelector<HTMLButtonElement>('.btn-next')
+    if (nextBtn) nextBtn.textContent = '→ Next'
+
     const breadcrumb = this.shadow.querySelector('.match-breadcrumb')
     if (breadcrumb && this.currentMatchIndex >= 0) {
       const match = this._matches[this.currentMatchIndex]

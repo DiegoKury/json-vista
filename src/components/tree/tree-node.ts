@@ -78,6 +78,20 @@ export class TreeNode {
       this.setCollapsed(true)
     }
 
+    // Handle expandToPath — expand only nodes whose full path is a strict prefix
+    // of the target path (avoids the name-only matching issue of firstMatchPath)
+    if (state.expandToPath) {
+      const target = state.expandToPath
+      const myPath = path
+      if (
+        myPath.length < target.length &&
+        myPath.every((seg, i) => seg === target[i]) &&
+        (isObject(this.opts.data) || isArray(this.opts.data))
+      ) {
+        this.setCollapsed(false)
+      }
+    }
+
     // Handle firstMatchPath auto-expand
     if (state.firstMatchPath && state.firstMatchPath[0] === this.opts.name) {
       const remaining = state.firstMatchPath.slice(1)
