@@ -77,15 +77,6 @@ export const filterData = (
         const b = ci ? term.toLowerCase() : term
         return sType === 'exact' ? a === b : a.includes(b)
       }
-      if (typeof value === 'boolean') {
-        return value.toString().toLowerCase() === term.toLowerCase()
-      }
-      if (typeof value === 'number') {
-        const str = String(value)
-        const a = ci ? str.toLowerCase() : str
-        const b = ci ? term.toLowerCase() : term
-        return sType === 'exact' ? a === b : a.includes(b)
-      }
     }
 
     if (type === 'number' && typeof value === 'number') {
