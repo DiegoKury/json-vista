@@ -175,7 +175,7 @@ export class JsonVista extends HTMLElement {
         this.renderToolbar(toolbar)
       }
     )
-    this.search.setData(this.displayData, this._data)
+    this.search.setData(this._data, this._data)
     card.appendChild(this.search.element)
 
     // Toolbar
@@ -302,7 +302,7 @@ export class JsonVista extends HTMLElement {
     if (!tbody) return
     tbody.innerHTML = ''
     this.renderTree(tbody)
-    this.search?.setData(this.displayData, this._data)
+    this.search?.setData(this._data, this._data)
   }
 }
 
