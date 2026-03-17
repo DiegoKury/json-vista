@@ -223,21 +223,32 @@ export const filterData = (
       const oObj = (typeof oNode === 'object' && oNode !== null && !Array.isArray(oNode))
         ? (oNode as Record<string, JsonValue>) : {}
 
-      // Check for direct key+value matches within this object
+      // Check for direct key+value matches using the ORIGINAL object's keys so that
+      // fields stripped by the primary filter are still reachable for secondary matching.
+      // When a stripped field matches, merge it back into the displayed result so both
+      // the primary-matching and secondary-matching fields are visible.
       let hasDirectMatch = false
       let directMatchCount = 0
-      for (const [key, value] of Object.entries(fNode as Record<string, JsonValue>)) {
+      const secondaryMatchedFields: Record<string, JsonValue> = {}
+
+      for (const [key, origValue] of Object.entries(oObj)) {
         const itemPath: Path = [...p, key]
         const keyMatch = keyEnabled ? matchesKey(key, keyTerm, keyType, ci) : true
-        const valMatch = matchesValue(oObj[key] ?? null, term, type, sType, condition, ci)
+        const valMatch = matchesValue(origValue ?? null, term, type, sType, condition, ci)
         if (keyMatch && valMatch) {
-          matches.push({ path: itemPath, key, value, matchType: keyMatch ? 'both' : 'value' })
+          secondaryMatchedFields[key] = origValue
+          const displayValue = (fNode as Record<string, JsonValue>)[key] ?? origValue
+          matches.push({ path: itemPath, key, value: displayValue, matchType: keyMatch ? 'both' : 'value' })
           hasDirectMatch = true
           directMatchCount++
         }
       }
-      // Keep the full primary object if any key matched secondary
-      if (hasDirectMatch) return { keep: true, data: fNode, matchedCount: directMatchCount }
+      // Keep the primary-filtered object merged with any secondary-matched fields
+      // so the user can see both why the primary matched and why the secondary matched.
+      if (hasDirectMatch) {
+        const mergedNode = { ...(fNode as Record<string, JsonValue>), ...secondaryMatchedFields }
+        return { keep: true, data: mergedNode, matchedCount: directMatchCount }
+      }
 
       // No direct match — recurse into nested collections
       const filteredObj: Record<string, JsonValue> = {}
