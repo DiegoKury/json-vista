@@ -90,6 +90,7 @@ export const filterData = (
 
     if (type === 'number' && typeof value === 'number') {
       const n = parseFloat(term)
+      if (isNaN(n)) return false
       if (condition === 'equal') return value === n
       if (condition === 'not equal') return value !== n
       if (condition === 'greater than') return value > n
