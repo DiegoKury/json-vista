@@ -279,6 +279,21 @@ tr:hover .btn-icon { opacity: 0.4 }
 .highlight-key   { background: var(--jv-key-match-bg) }
 .node-key.on-match-path { border-left: 2px solid #90caf9 }
 
+/* Currently focused match (via → Next navigation) */
+tr.match-current td { background: #bfdbfe !important; }
+tr.match-current td:first-child { border-left: 3px solid #2563eb; }
+
+/* Breadcrumb path shown below the toolbar filter buttons */
+.match-breadcrumb {
+  width: 100%;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-family: ui-monospace, 'Cascadia Code', monospace;
+  padding: 0.15rem 0.25rem;
+  letter-spacing: 0.01em;
+}
+.match-breadcrumb:empty { display: none; }
+
 /* ── Loading spinner ─────────────────────────────────────── */
 @keyframes jv-spin { to { transform: rotate(360deg) } }
 .spinner {

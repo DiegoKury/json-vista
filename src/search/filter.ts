@@ -121,7 +121,7 @@ export const filterData = (
       const keyMatch = keyEnabled ? matchesKey(key, keyTerm, keyType, ci) : true
       const valMatch = matchesValue(node, term, type, sType, condition, ci)
       if (keyMatch && valMatch) {
-        matches.push({ path, key, value: node, matchType: 'both' })
+        matches.push({ path, key, value: node, matchType: 'both', id: `match-${matchIdCounter++}` })
         return { keep: true, data: node, matchedCount: 1 }
       }
       return { keep: false, data: null, matchedCount: 0 }
@@ -200,7 +200,7 @@ export const filterData = (
         const keyMatch = keyEnabled ? matchesKey(key, keyTerm, keyType, ci) : true
         const valMatch = matchesValue(oNode, term, type, sType, condition, ci)
         if (keyMatch && valMatch) {
-          matches.push({ path: p, key, value: fNode, matchType: 'both' })
+          matches.push({ path: p, key, value: fNode, matchType: 'both', id: `match-${matchIdCounter++}` })
           return { keep: true, data: fNode, matchedCount: 1 }
         }
         return { keep: false, data: null, matchedCount: 0 }
@@ -238,7 +238,7 @@ export const filterData = (
         if (keyMatch && valMatch) {
           secondaryMatchedFields[key] = origValue
           const displayValue = (fNode as Record<string, JsonValue>)[key] ?? origValue
-          matches.push({ path: itemPath, key, value: displayValue, matchType: keyMatch ? 'both' : 'value' })
+          matches.push({ path: itemPath, key, value: displayValue, matchType: keyMatch ? 'both' : 'value', id: `match-${matchIdCounter++}` })
           hasDirectMatch = true
           directMatchCount++
         }

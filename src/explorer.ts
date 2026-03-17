@@ -17,7 +17,7 @@ export class JsonVista extends HTMLElement {
   private displayData: JsonValue = null
   private _matches: Match[] = []
   private matchCount = 0
-  private currentMatchIndex = 0
+  private currentMatchIndex = -1
   private originalIndices: Record<string, string | number> = {}
   private isFiltered = false
   private isSorted = false
@@ -68,7 +68,7 @@ export class JsonVista extends HTMLElement {
   private resetSearchState(): void {
     this._matches = []
     this.matchCount = 0
-    this.currentMatchIndex = 0
+    this.currentMatchIndex = -1
     this.originalIndices = {}
     this.isFiltered = false
     this.isSorted = false
@@ -152,7 +152,7 @@ export class JsonVista extends HTMLElement {
         this.displayData = result.filteredData
         this._matches = result.matches
         this.matchCount = result.matchCount
-        this.currentMatchIndex = 0
+        this.currentMatchIndex = -1
         this.originalIndices = result.originalIndices
         this.isFiltered = true
         this.state.setExpandToMatch(false)
@@ -254,7 +254,8 @@ export class JsonVista extends HTMLElement {
 
       const countSpan = document.createElement('span')
       countSpan.className = 'match-count'
-      countSpan.textContent = `${this.matchCount} match${this.matchCount !== 1 ? 'es' : ''}`
+      const pos = this.currentMatchIndex >= 0 ? `${this.currentMatchIndex + 1} / ` : ''
+      countSpan.textContent = `${pos}${this.matchCount} match${this.matchCount !== 1 ? 'es' : ''}`
       toolbar.appendChild(countSpan)
 
       toolbar.appendChild(btn('→ Next', () => this.nextMatch(), '', 'Jump to next match'))
@@ -268,15 +269,52 @@ export class JsonVista extends HTMLElement {
       toolbar.appendChild(expandBtn)
 
       toolbar.appendChild(btn('✕ Clear', () => { this.search?.clear() }, 'btn-danger', 'Clear search and restore full tree'))
+
+      // Breadcrumb — shows path to the currently focused match, wraps to its own line
+      const breadcrumb = document.createElement('div')
+      breadcrumb.className = 'match-breadcrumb'
+      if (this.currentMatchIndex >= 0 && this._matches[this.currentMatchIndex]) {
+        breadcrumb.textContent = ['root', ...this._matches[this.currentMatchIndex].path].join(' › ')
+      }
+      toolbar.appendChild(breadcrumb)
     }
   }
 
   private nextMatch(): void {
     if (!this._matches.length) return
-    const nextIndex = (this.currentMatchIndex + 1) % this._matches.length
-    const id = this._matches[nextIndex].id
-    if (id) this.shadow.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    this.currentMatchIndex = nextIndex
+
+    // Remove focus ring from the previously focused row
+    this.shadow.querySelector('tr.match-current')?.classList.remove('match-current')
+
+    this.currentMatchIndex = (this.currentMatchIndex + 1) % this._matches.length
+    const match = this._matches[this.currentMatchIndex]
+
+    // Expand tree nodes along the match's path so the row is visible in the DOM
+    this.state.setFirstMatchPath([...match.path])
+
+    // Defer scroll + highlight until after the expansion has updated the DOM
+    requestAnimationFrame(() => {
+      if (match.id) {
+        const el = this.shadow.getElementById(match.id)
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el?.classList.add('match-current')
+      }
+    })
+
+    this.updateMatchNav()
+  }
+
+  private updateMatchNav(): void {
+    const counter = this.shadow.querySelector('.match-count')
+    if (counter) {
+      const pos = this.currentMatchIndex >= 0 ? `${this.currentMatchIndex + 1} / ` : ''
+      counter.textContent = `${pos}${this.matchCount} match${this.matchCount !== 1 ? 'es' : ''}`
+    }
+    const breadcrumb = this.shadow.querySelector('.match-breadcrumb')
+    if (breadcrumb && this.currentMatchIndex >= 0) {
+      const match = this._matches[this.currentMatchIndex]
+      breadcrumb.textContent = match ? ['root', ...match.path].join(' › ') : ''
+    }
   }
 
   private renderTree(tbody: HTMLTableSectionElement): void {
