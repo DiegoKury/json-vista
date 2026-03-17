@@ -272,7 +272,7 @@ export const filterData = (
   let finalData = primaryResult.data
   let matchedCount = primaryResult.matchedCount
 
-  if (isSecondarySearchEnabled && secondarySearchTerm && finalData) {
+  if (isSecondarySearchEnabled && (secondarySearchTerm || (isSecondaryKeySearchEnabled && secondaryKeySearchTerm)) && finalData) {
     const secondaryResult = secondaryFilter(
       finalData, initialData,
       secondarySearchTerm, secondaryPropertyType!, secondarySearchType!,
