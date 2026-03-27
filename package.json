@@ -1,6 +1,6 @@
 {
   "name": "json-vista",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Framework-agnostic JSON tree viewer Web Component with search, filtering, and distinct value analysis",
   "type": "module",
   "main": "dist/json-vista.umd.cjs",
