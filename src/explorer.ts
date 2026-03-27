@@ -2,6 +2,7 @@ import type { JsonValue, Match, Path, Source } from './types'
 import { State } from './state'
 import { Search } from './components/search'
 import { TreeNode } from './components/tree/tree-node'
+import { hasCircularReference } from './utils/utils'
 import styles from '../styles/index.css?raw'
 
 export class JsonVista extends HTMLElement {
@@ -38,6 +39,9 @@ export class JsonVista extends HTMLElement {
   // --- Properties ---
 
   set data(value: JsonValue) {
+    if (hasCircularReference(value)) {
+      throw new Error('json-vista: data contains a circular reference. Circular structures cannot be rendered as a tree.')
+    }
     this._data = value
     this.displayData = value
     this.resetSearchState()
@@ -85,9 +89,11 @@ export class JsonVista extends HTMLElement {
     }, this._data)
   }
 
-  private findFirstMatchPath(obj: JsonValue, matched: Match[], indices: Record<string, string | number>, path: Path = []): Path | null {
+  private findFirstMatchPath(obj: JsonValue, matched: Match[], indices: Record<string, string | number>, path: Path = [], seen = new WeakSet<object>()): Path | null {
     if (matched.some(m => m.path.join('/') === path.join('/'))) return path
     if (typeof obj !== 'object' || obj === null) return null
+    if (seen.has(obj)) return null
+    seen.add(obj)
     for (const [key, value] of Object.entries(obj as Record<string, JsonValue>)) {
       const nextPath = Array.isArray(obj)
         ? [...path, indices?.[path.concat(key).join('/')] ?? key]
@@ -99,8 +105,11 @@ export class JsonVista extends HTMLElement {
   }
 
   private sortData(data: JsonValue): JsonValue {
+    const seen = new WeakSet<object>()
     const sort = (obj: JsonValue): JsonValue => {
       if (typeof obj !== 'object' || obj === null) return obj
+      if (seen.has(obj)) return null
+      seen.add(obj)
       if (Array.isArray(obj)) return (obj as JsonValue[]).map(sort)
       return Object.keys(obj as Record<string, JsonValue>).sort().reduce<Record<string, JsonValue>>((acc, key) => {
         acc[key] = sort((obj as Record<string, JsonValue>)[key])

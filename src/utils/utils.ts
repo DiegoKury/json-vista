@@ -29,3 +29,11 @@ export const getGeneralizedSegment = (segment: string | number): string => {
 
 export const getIndentationStyle = (depth: number): string =>
   `padding-left: ${depth * 20}px`
+
+export const hasCircularReference = (value: JsonValue, seen = new WeakSet<object>()): boolean => {
+  if (value === null || typeof value !== 'object') return false
+  if (seen.has(value)) return true
+  seen.add(value)
+  if (Array.isArray(value)) return value.some(item => hasCircularReference(item, seen))
+  return Object.values(value as Record<string, JsonValue>).some(v => hasCircularReference(v, seen))
+}

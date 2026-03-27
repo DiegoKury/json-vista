@@ -59,6 +59,7 @@ export const filterData = (
   const originalIndices: Record<string, string | number> = {}
   const matches: Match[] = []
   let matchIdCounter = 1
+  const seen = new WeakSet<object>()
 
   const matchesValue = (
     value: JsonValue,
@@ -127,6 +128,9 @@ export const filterData = (
       return { keep: false, data: null, matchedCount: 0 }
     }
 
+    if (seen.has(node)) return { keep: false, data: null, matchedCount: 0 }
+    seen.add(node)
+
     if (Array.isArray(node)) {
       const filtered: JsonValue[] = new Array(node.length)
       let keep = false
@@ -194,6 +198,7 @@ export const filterData = (
     keyEnabled: boolean,
     path: Path = []
   ): { keep: boolean; data: JsonValue; matchedCount: number } => {
+    const secondarySeen = new WeakSet<object>()
     const recurse = (fNode: JsonValue, oNode: JsonValue, p: Path): { keep: boolean; data: JsonValue; matchedCount: number } => {
       if (typeof fNode !== 'object' || fNode === null) {
         const key = p[p.length - 1]
@@ -205,6 +210,9 @@ export const filterData = (
         }
         return { keep: false, data: null, matchedCount: 0 }
       }
+
+      if (secondarySeen.has(fNode)) return { keep: false, data: null, matchedCount: 0 }
+      secondarySeen.add(fNode)
 
       if (Array.isArray(fNode)) {
         const oArr = Array.isArray(oNode) ? oNode : []
