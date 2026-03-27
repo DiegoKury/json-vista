@@ -480,6 +480,7 @@ export class TreeNode {
     for (const child of this.childNodes) {
       child.appendTo(tbody)
     }
+    if (this.showMoreRow) tbody.appendChild(this.showMoreRow)
   }
 
   destroy(): void {
