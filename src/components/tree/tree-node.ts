@@ -372,7 +372,7 @@ export class TreeNode {
     }
 
     let lastRow = this.childNodes.length > 0
-      ? this.childNodes[this.childNodes.length - 1].rows.at(-1)!
+      ? this.childNodes[this.childNodes.length - 1].rows.slice(-1)[0]
       : this.tr
 
     const insertAfter = (ref: HTMLTableRowElement, newRow: HTMLTableRowElement) => {
