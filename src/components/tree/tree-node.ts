@@ -12,6 +12,8 @@ import { createScalarDisplay } from './scalar-display'
 import { createNodeToggle } from './node-toggle'
 import { DistinctValuesDialog } from './distinct-values-dialog'
 
+const CHUNK_SIZE = 100
+
 interface TreeNodeOptions {
   originalData: JsonValue
   data: JsonValue
@@ -45,6 +47,8 @@ export class TreeNode {
   private showUnfiltered = false
   private dialog: DistinctValuesDialog | null = null
   private unsubscribe: (() => void) | null = null
+  private renderedCount = 0
+  private showMoreRow: HTMLTableRowElement | null = null
 
   private opts: TreeNodeOptions
 
@@ -67,6 +71,7 @@ export class TreeNode {
     for (const child of this.childNodes) {
       result.push(...child.rows)
     }
+    if (this.showMoreRow) result.push(this.showMoreRow)
     return result
   }
 
@@ -89,6 +94,7 @@ export class TreeNode {
         (isObject(this.opts.data) || isArray(this.opts.data))
       ) {
         this.setCollapsed(false)
+        this.ensureChildRendered(target[myPath.length])
       }
     }
 
@@ -97,6 +103,7 @@ export class TreeNode {
       const remaining = state.firstMatchPath.slice(1)
       if (isObject(this.opts.data) || isArray(this.opts.data)) {
         this.setCollapsed(false)
+        if (remaining.length > 0) this.ensureChildRendered(remaining[0])
       }
       state.setFirstMatchPath(remaining.length > 0 ? remaining : null)
     }
@@ -223,6 +230,9 @@ export class TreeNode {
         child.updateChildVisibility()
       }
     }
+    if (this.showMoreRow) {
+      this.showMoreRow.style.display = this.collapsed ? 'none' : ''
+    }
   }
 
   private syncChildren(): void {
@@ -305,20 +315,48 @@ export class TreeNode {
       child.rows.forEach(row => row.remove())
     }
     this.childNodes = []
+    this.showMoreRow?.remove()
+    this.showMoreRow = null
+    this.renderedCount = 0
     this.renderChildren()
+  }
+
+  private getChildEntries(): [string | number, JsonValue][] {
+    const dataToShow = this.showUnfiltered ? this.opts.getOriginalData(this.opts.path) : this.opts.data
+    if (Array.isArray(dataToShow)) {
+      return (dataToShow as JsonValue[])
+        .map((v, i) => [i, v] as [number, JsonValue])
+        .filter(([, v]) => v !== undefined)
+    }
+    if (typeof dataToShow === 'object' && dataToShow !== null) {
+      return Object.entries(dataToShow as Record<string, JsonValue>)
+        .filter(([, v]) => v !== undefined)
+    }
+    return []
+  }
+
+  private ensureChildRendered(childKey: string | number): void {
+    const entries = this.getChildEntries()
+    const targetIndex = entries.findIndex(([key]) => String(key) === String(childKey))
+    if (targetIndex === -1 || targetIndex < this.renderedCount) return
+    while (this.renderedCount <= targetIndex) {
+      this.renderNextChunk()
+    }
   }
 
   private renderChildren(): void {
     if (this.childNodes.length > 0) return // already rendered
+    this.renderedCount = 0
+    this.renderNextChunk()
+  }
 
-    const { data, state } = this.opts
-    const dataToShow = this.showUnfiltered ? this.opts.getOriginalData(this.opts.path) : data
+  private renderNextChunk(): void {
+    const entries = this.getChildEntries()
+    const end = Math.min(this.renderedCount + CHUNK_SIZE, entries.length)
+    const { state } = this.opts
 
-    const insertAfter = (ref: HTMLTableRowElement, newRow: HTMLTableRowElement) => {
-      ref.parentNode?.insertBefore(newRow, ref.nextSibling)
-    }
-
-    let lastRow = this.tr
+    this.showMoreRow?.remove()
+    this.showMoreRow = null
 
     const sharedChildProps = {
       originalData: this.opts.originalData,
@@ -333,7 +371,23 @@ export class TreeNode {
       root: this.opts.root,
     }
 
-    const insertChild = (node: TreeNode) => {
+    let lastRow = this.childNodes.length > 0
+      ? this.childNodes[this.childNodes.length - 1].rows.at(-1)!
+      : this.tr
+
+    const insertAfter = (ref: HTMLTableRowElement, newRow: HTMLTableRowElement) => {
+      ref.parentNode?.insertBefore(newRow, ref.nextSibling)
+    }
+
+    for (let i = this.renderedCount; i < end; i++) {
+      const [key, value] = entries[i]
+      const node = new TreeNode({
+        ...sharedChildProps,
+        name: key,
+        data: cleanData(value),
+        depth: this.opts.depth + 1,
+        path: [...this.opts.path, key],
+      })
       this.childNodes.push(node)
       node.rows.forEach(row => {
         insertAfter(lastRow, row)
@@ -341,28 +395,24 @@ export class TreeNode {
       })
     }
 
-    if (Array.isArray(dataToShow)) {
-      (dataToShow as JsonValue[]).forEach((value, index) => {
-        if (value === undefined) return
-        insertChild(new TreeNode({
-          ...sharedChildProps,
-          name: index,
-          data: cleanData(value),
-          depth: this.opts.depth + 1,
-          path: [...this.opts.path, index],
-        }))
+    this.renderedCount = end
+
+    if (this.renderedCount < entries.length) {
+      const remaining = entries.length - this.renderedCount
+      this.showMoreRow = document.createElement('tr')
+      const td = document.createElement('td')
+      td.colSpan = 3
+      td.style.cssText = getIndentationStyle(this.opts.depth + 1)
+      const btn = document.createElement('button')
+      btn.className = 'btn btn-secondary'
+      btn.textContent = `Show ${Math.min(CHUNK_SIZE, remaining)} more (${remaining} remaining)`
+      btn.addEventListener('click', () => {
+        this.renderNextChunk()
+        this.updateChildVisibility()
       })
-    } else if (typeof dataToShow === 'object' && dataToShow !== null) {
-      Object.entries(dataToShow as Record<string, JsonValue>).forEach(([key, value]) => {
-        if (value === undefined) return
-        insertChild(new TreeNode({
-          ...sharedChildProps,
-          name: key,
-          data: cleanData(value),
-          depth: this.opts.depth + 1,
-          path: [...this.opts.path, key],
-        }))
-      })
+      td.appendChild(btn)
+      this.showMoreRow.appendChild(td)
+      insertAfter(lastRow, this.showMoreRow)
     }
   }
 
@@ -435,6 +485,7 @@ export class TreeNode {
   destroy(): void {
     this.unsubscribe?.()
     this.dialog?.destroy()
+    this.showMoreRow?.remove()
     for (const child of this.childNodes) child.destroy()
   }
 }
